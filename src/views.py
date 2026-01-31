@@ -1,3 +1,5 @@
+from typing import List, Dict, Any
+
 from src.utils import read_operations
 import pandas as pd
 from datetime import datetime
@@ -7,20 +9,12 @@ from collections import defaultdict
 
 def main(data_str: str):
     '''Функция принимает JSON-ответ и возвращает транзакции с 1-го числа по дату ввода'''
-    df = read_operations("../data/operations.xlsx")
+    transactions_df = read_operations("../data/operations.xlsx")
     end_date = pd.to_datetime(data_str, format = "%d.%m.%Y")
     start_date = end_date.replace(day=1)
 
-    df = df[df["Дата операции"].between(start_date, end_date)]
-    print(df)
-
-def group_transactions_by_card(df):
-    '''Функция возвращает словарь с операциями по каждой карте за данный период'''
-    card_transactions = defaultdict(list)
-    for card_number, amount in zip(df['card_number'], df['amount']):
-        card_transactions[card_number].append(amount)
-        return card_transactions
-    print(card_transactions)
+    transactions_df = transactions_df[transactions_df["Дата операции"].between(start_date, end_date)]
+    print(transactions_df)
 
 
 def get_greeting(date_time):
@@ -37,6 +31,15 @@ def get_greeting(date_time):
         return "Добрый вечер!"
 
 
+def group_transactions_by_card(df):
+    '''Функция возвращает словарь с операциями по каждой карте за данный период'''
+    card_transactions = defaultdict(list)
+    for card_number, amount in zip(df['card_number'], df['amount']):
+        card_transactions[card_number].append(amount)
+        return card_transactions
+    print(card_transactions)
+
+
 def get_mask_card_number(card_number: str) -> str:
     """Функция маскировки номера карты."""
     card_number = card_number.strip()
@@ -50,9 +53,10 @@ def get_total_spent():
     pass
 
 
-def get_top_transactions(transactions):
-    '''Функция сортирует транзакции по убыванию суммы платежа'''
-    pass
+def top_transactions_5(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Функция возвращает топ 5 транзакций"""
+    transactions.sort(key=lambda x: x["transaction_amount"], reverse=True)
+    return transactions[:5]
 
 
 api_url = 'https://api.exchangerate-api.com/v4/latest/RUB'
