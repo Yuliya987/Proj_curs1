@@ -1,6 +1,8 @@
 from src.utils import read_operations
 import pandas as pd
 from datetime import datetime
+import requests
+from collections import defaultdict
 
 
 def main(data_str: str):
@@ -11,6 +13,14 @@ def main(data_str: str):
 
     df = df[df["Дата операции"].between(start_date, end_date)]
     print(df)
+
+def group_transactions_by_card(df):
+    '''Функция возвращает словарь с операциями по каждой карте за данный период'''
+    card_transactions = defaultdict(list)
+    for card_number, amount in zip(df['card_number'], df['amount']):
+        card_transactions[card_number].append(amount)
+        return card_transactions
+    print(card_transactions)
 
 
 def get_greeting(date_time):
@@ -42,14 +52,42 @@ def get_total_spent():
 
 def get_top_transactions(transactions):
     '''Функция сортирует транзакции по убыванию суммы платежа'''
-    sorted_transactions = sorted(transactions, key=lambda x: x['amount'])
-    top_transactions = sorted_transactions[:5]
-    return top_transactions
+    pass
+
+
+api_url = 'https://api.exchangerate-api.com/v4/latest/RUB'
+
+
+def get_currency_rates(date_str):
+    '''Функция возврщает курс валют'''
+    try:
+        response = requests.get(api_url)
+    if response.status_code == 200:
+        data = response.json()
+        rates = data['rates']
+        currency_rates = {currency: rates[currency] for currency in rates}
+        return currency_rates
+    else:
+        raise Exception(
+            f"Ошибка при получении данных: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        return f"Ошибка: {str(e)}"
+
+
+if name == "main":
+    date_input = input("Введите дату в формате YYYY-MM-DD: ")
+    try: currency_rates = get_currency_rates(date_input)
+    print("Курсы валют:")
+    for currency, rate in currency_rates.items():
+        print(f"{currency}: {rate:.2f} руб.")
+    except Exception as e: (
+        print(f"Произошла ошибка: {e}"))
 
 get_greeting("2025-08-22 10:30:00")
 get_greeting("2025-08-22 15:30:00")
 get_greeting("2025-08-22 20:30:00")
 
+group_transactions_by_card(transactions)
 
 get_mask_card_number("7000792289606361")
 
@@ -63,6 +101,7 @@ transactions = [  {'id': 1, 'amount': 1000},
     {'id': 8, 'amount': 1300},
     {'id': 9, 'amount': 2100},
     {'id': 10, 'amount': 1900}   ]
+
 get_top_transactions(transactions)
 
 
