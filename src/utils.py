@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 import pandas as pd
@@ -5,7 +6,7 @@ import logging
 from logging import Logger
 
 
-def liggin() -> Logger:
+def loggin() -> Logger:
     """Настройка логирования для дальнейшего использования в других модулях"""
     logging.basicConfig(
         level=logging.INFO,
@@ -32,6 +33,6 @@ def write_json(file_path: str, data: Any) -> None:
 
 
 def read_json(file_path: str) -> Any:
-    '''Чтение JSON-файла'''
+    """Чтение JSON-файла"""
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
