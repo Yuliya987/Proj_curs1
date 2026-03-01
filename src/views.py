@@ -1,6 +1,5 @@
 import json
 import os
-from collections import defaultdict
 from datetime import datetime
 from typing import List, Dict, Any
 
@@ -10,9 +9,9 @@ from dotenv import load_dotenv
 
 from src.utils import read_operations
 
-load_dotenv()
-API_KEY = os.getenv("api_key")
-
+#load_dotenv()
+#API_KEY = os.getenv("api_key")
+#url = f'https://api.twelvedata.com/price?symbol={symbol}&interval=1day&apike'
 
 def main(data_str: str):
     """Функция принимает JSON-ответ и возвращает транзакции с 1-го числа по дату ввода"""
@@ -24,94 +23,91 @@ def main(data_str: str):
     print(transactions_df)
 
 
-def get_greeting(date_time):
-    """Функция принимает дату и время и возвращает соответствующее приветствие"""
-    dt = datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
+#def sort_transactions_by_card(transactions):
+ #   """Сортирует транзакции по номеру карты в словарь"""
+ #   sorted_transactions = {}
+ #   for card_number, amounts in transactions.items():
+ #       if card_number in sorted_transactions:
+  #          sorted_transactions[card_number].append(amounts)
+  #      else:
+#            sorted_transactions[card_number] = [amounts]
 
-    current_hour = dt.hour
-
-    if 5 <= current_hour < 12:
-        return "Доброе утро!"
-    elif 12 <= current_hour < 18:
-        return "Добрый день!"
-    else:
-        return "Добрый вечер!"
-
-
-#def group_transactions_by_card(df):
-    """Функция возвращает словарь с операциями по каждой карте за данный период"""
-    card_transactions = defaultdict(list)
-    for card_number, amount in zip(df['card_number'], df['amount']):
-        card_transactions[card_number].append(amount)
-    return card_transactions
+ #   return sorted_transactions
 
 
 
-def get_mask_card_number(card_number: str) -> str:
-    """Функция маскировки номера карты"""
-    card_number = card_number.strip()
-    if len(card_number) != 16 or not card_number.isdigit():
-        return "Проверьте номер карты"
-    last_digits = card_number[-4:]
-    return f"{last_digits}"
 
 
-def get_total_spent():
-    pass
+#def get_mask_card_number(card_number: str) -> str:
+ #   """Функция маскировки номера карты"""
+ #   card_number = card_number.strip()
+ #   if len(card_number) != 16 or not card_number.isdigit():
+ #       return "Проверьте номер карты"
+ #   last_digits = card_number[-4:]
+  #  return f"{last_digits}"
 
 
-def get_top_transactions(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Функция возвращает топ 5 транзакций"""
-    sorted_transactions = sorted(transactions, key=lambda x: x['amount'])
-    return sorted_transactions[:5]
-
-def get_stock_cur(stock: str, yf=None) -> Any:
-    """Функция получает акции с помощью Yahoo Finance"""
-    stock_data = yf.Ticker(stock)
-    todays_data = stock_data.history(period="1d")
-    return todays_data["High"].iloc[0]
+#def get_total_spent():
+ #   pass
 
 
-def get_currency_rates(currency: str) -> Any:
-    """Функция возврщает курс валют"""
-    url: str = f"api_url = 'https://api.exchangerate-api.com/v4/latest/RUB'&base={currency}"
-    response = requests.get(url, headers={"apikey": API_KEY}, timeout=40)
-    response_data = json.loads(response.text)
-    return response_data["rates"]["RUB"]
+#def get_top_transactions(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+ #   """Функция возвращает топ 5 транзакций"""
+ #   sorted_transactions = sorted(transactions, key=lambda x: x['amount'])
+ #   return sorted_transactions[:5]
+
+#def get_stock_cur(stock: str, yf=None) -> Any:
+#    """Функция получает акции с помощью Yahoo Finance"""
+#    stock_data = yf.Ticker(stock)
+#    todays_data = stock_data.history(period="1d")
+#    return todays_data["High"].iloc[0]
 
 
-get_greeting("2025-08-22 10:30:00")
-get_greeting("2025-08-22 15:30:00")
-get_greeting("2025-08-22 20:30:00")
+#def get_currency_rate(api_key, currency_from, currency_to):
+    # URL для получения данных курса валют
+#    url = f'https://api.exchangeratesapi.io/latest?access_key={api_key}&format=json&base={currency_from}&symbols={currency_to}'
 
-get_mask_card_number("7000792289606361")
+ #   try:
+        # Отправка запроса к API
+ #       response = requests.get(url)
+  #      response.raise_for_status()  # Проверка на ошибки
 
-transactions1 = [{'id': 1, 'amount': 1000},
-                 {'id': 2, 'amount': 2000},
-                 {'id': 3, 'amount': 1500},
-                 {'id': 4, 'amount': 2500},
-                 {'id': 5, 'amount': 1200},
-                 {'id': 6, 'amount': 1800},
-                 {'id': 7, 'amount': 2200},
-                 {'id': 8, 'amount': 1300},
-                 {'id': 9, 'amount': 2100},
-                 {'id': 10, 'amount': 1900}]
+        # Преобразование ответа в JSON
+ #       data = response.json()
 
-get_top_transactions(transactions1)
+        # Возврат курса валют
+  #      return data['rate'][currency_to]
+  #  except requests.exceptions.RequestException as e:
+  #      print(f"Произошла ошибка при запросе: {e}")
+ #       return None
 
-#group_transactions_by_card(transactions1)
+    # Пример использования функции
+
+
+
+#api_key = api_key
+#currency_from = 'USD'
+#currency_to = 'RUB'
+
+#get_currency_rate(api_key, 'USD' , 'RUB')
+#if rate:
+ #   print(f"Курс {currency_from} к {currency_to} составляет: {rate}")
+#else:
+ #   print("Не удалось получить курс валют.")
+
+
+#transactions = {
+ #   '123456': [100, 200, 300],
+#    '789012': [400, 500],
+ #   '123456': [600]
+#}
+
+#result = sort_transactions_by_card(transactions)
+#print(result)
+
+#rate = get_currency_rates("USD")
+#print(rate)
+
+#print(get_stock_cur())
 
 main("20.12.2021")
-
-# Пример использования:
-print(get_greeting("2025-08-22 10:30:00"))
-print(get_greeting("2025-08-22 15:30:00"))
-print(get_greeting("2025-08-22 20:30:00"))
-
-print(get_mask_card_number("7000792289606361"))
-
-print(get_top_transactions(transactions1))
-
-print(get_currency_rates("USD"))
-
-print(get_stock_cur())
