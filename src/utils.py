@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from functools import wraps
 from typing import Any, List, Dict
 
 import logger
@@ -23,20 +24,8 @@ def get_greeting(date_time):
     else:
         return "Добрый вечер!"
 
-
-#def loggin() -> Logger:
-#    """Настройка логирования для дальнейшего использования в других модулях"""
-#    logging.basicConfig(
- #       level=logging.INFO,
-#        format="%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s",
-#        filename="utils_log.txt",
-#        filemode="w",
- #   )
-#    logger = logging.getLogger(__name__)
-#    return logger
-
 def read_operations(file_path: str) -> Any:
-    """Функция чтения файлов из JSON-файло"""
+    """Функция чтения файлов из excel-файлов"""
     transactions_df = pd.read_excel(file_path)
 
     transactions_df["Дата операции"] = pd.to_datetime(transactions_df["Дата операции"], format = "%d.%m.%Y %H:%M:%S")
@@ -57,7 +46,112 @@ def read_json(file_path: str) -> Any:
         return json.load(f)
 
 
-#@log_function
+logs_path = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    'logs',
+)
+os.makedirs(logs_path, exist_ok=True)
+
+logger = logging.getLogger('utils')
+logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+file_handler = logging.FileHandler(os.path.join(logs_path, 'utils.log'), encoding='utf-8', mode='w')
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(formatter)
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.WARNING)
+console_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+def log_function(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        logger.info(f'Вызов функции {func.__name__}')
+        try:
+            result = func(*args, **kwargs)
+            logger.info(f'Функция {func.__name__} успешно завершилась')
+            return result
+        except Exception as err:
+            logger.error(f"Ошибка в функции {func.__name__}: {str(err)}")
+            raise
+
+    return wrapper
+
+
+@log_function
+def get_greeting() -> str | None:
+    """Функция возвращает приветствие в зависимости от текущего времени пользователя"""
+
+    # Получаем текущее время
+    cur_hour = datetime.now().hour
+
+    # Создаем список приветствий
+    greet_message = ['Доброй ночи', 'Доброго утра', 'Доброго дня', 'Доброго вечера']
+
+    # В зависимости от времени выбираем из списка
+    time_of_day = cur_hour // 6
+
+    return greet_message[time_of_day]
+
+@log_function
+def get_expense(data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Функция для получения суммы трат по картам"""
+
+    # Создаем DataFrame из списка транзакций
+    data_frame = pd.DataFrame(data)
+
+    # Проверяем, что DataFrame не пустой и содержит необходимые колонки
+    if data_frame.empty or 'amount' not in data_frame.columns or 'card' not in data_frame.columns:
+        return []
+
+    # Фильтруем траты (отрицательные суммы), группируем по карте и вычисляем сумму
+    expenses = data_frame[data_frame['amount'] < 0].groupby('card')['amount'].sum().abs().round(2)
+
+    # Формируем результат в нужном формате
+    result1: List[Dict[str, Any]] = []
+    for card, total_amount in expenses.items():
+        # Вычисляем кэшбэк 1% от суммы трат
+        cashback = round(total_amount * 0.01, 2)
+        # Добавляем информацию по карте (последние цифры, сумма трат, кэшбэк)
+        result1.append({"last_digits": str(card)[1:], "total_spent": float(total_amount), "cashback": float(cashback)})
+
+    return result1
+
+@log_function
+def top_five(data: List[Dict[str, Any]]) -> List[Dict[str, Any]] | None:
+    """Функция получает на вход список словарей с транзакциями и возвращает ТОП 5 транзакций по сумме платежа"""
+
+    # Проверяем, что входные данные не пустые
+    if not data:
+        return None
+
+    # Сортируем транзакции по абсолютному значению суммы (по убыванию) и берем топ-5
+    result = sorted(data, key=lambda transaction: abs(transaction.get('amount', 0)), reverse=True)[:5]
+
+    # Форматируем результат для вывода
+    formatted_result = []
+    for transaction in result:
+        formatted_transaction = {}
+        # Для каждой транзакции оставляем только нужные поля
+        for key in ['date', 'amount', 'category', 'description']:
+            if key in transaction:
+                if key == 'date':
+                    # Для даты оставляем только часть до пробела (убираем время)
+                    formatted_transaction[key] = transaction[key].split()[0]
+                else:
+                    # Для остальных полей копируем как есть
+                    formatted_transaction[key] = transaction[key]
+        formatted_result.append(formatted_transaction)
+
+    # Возвращаем отформатированный список топ-5 транзакций
+    return formatted_result
+
+    #@log_function
 #def stock_price(data: List[str]) -> List[Dict[str, Any]] | None:
 #        """Функция получает на вход список акций и возвращает список словарей, где ключи - код акций, а значение -
 #        стоимость акций"""

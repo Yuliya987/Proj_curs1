@@ -7,7 +7,8 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
-from src.utils import read_operations
+from src.utils import read_operations, get_greeting, get_expense, top_five
+
 
 #load_dotenv()
 #API_KEY = os.getenv("api_key")
@@ -109,5 +110,24 @@ def main(data_str: str):
 #print(rate)
 
 #print(get_stock_cur())
+
+#Генерируем приветствие в зависимости от времени суток
+greeting_str = get_greeting()
+
+# Фильтруем данные по указанной дате
+filtered_data = main()
+
+# Получаем информацию о расходах по картам
+card_expence = get_expense(filtered_data)
+
+# Получаем топ-5 транзакций по сумме
+top_five_list = top_five(filtered_data)
+
+result = {
+    'greeting': greeting_str,  #Приветствие
+    'cards': card_expence, # данные по картам
+    'top_transactions': top_five_list # Топ-5 транзакций
+}
+
 
 main("20.12.2021")
