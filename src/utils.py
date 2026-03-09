@@ -9,6 +9,7 @@ import pandas as pd
 import logging
 from logging import Logger
 
+import requests
 from dotenv import load_dotenv
 
 def get_greeting(date_time):
@@ -150,6 +151,119 @@ def top_five(data: List[Dict[str, Any]]) -> List[Dict[str, Any]] | None:
 
     # Возвращаем отформатированный список топ-5 транзакций
     return formatted_result
+
+@log_function
+def exchange_rate(currency: List[str]) -> List[Dict[str, Any]] | None:
+    """Функция получает на вход словарь с перечнем валют, по которым надо получить текущий курс и возвращает словарь,
+    где ключи - код валюты, а значения - текущий курс"""
+
+    # Инициализируем список для хранения результатов
+    currency_value: List[Dict[str, Any]] = []
+
+    # Загружаем переменные окружения из .env файла
+    load_dotenv()
+    # Получаем API ключ из переменных окружения
+    api_key = os.getenv('API_KEY')
+
+    # Проверяем наличие API ключа
+    if not api_key:
+        logger.error('API_KEY не найден в переменных окружения')
+
+    # Обрабатываем каждую валюту из списка
+    for item in currency:
+        # Формируем URL для запроса конвертации в рубли
+        url = f'https://api.twelvedata.com/currency_conversion?symbol={item}/RUB&amount=100&apikey={api_key}'
+
+        try:
+            # Логируем начало запроса к API
+            logger.info(f'Отправка GET-request для {currency} на https://api.twelvedata.com...')
+            # Выполняем HTTP-запрос с таймаутом 10 секунд
+            response = requests.get(url, timeout=10)
+            logger.info(f'Запрос выполнен успешно. Код состояния: {response.status_code}')
+
+            # Проверяем успешность HTTP-запроса
+            if response.status_code != 200:
+                logger.error(f'API вернул код состояния: {response.status_code} для валюты {item}')
+                continue
+
+            # Парсим JSON ответ от API
+            get_convert = response.json()
+            logger.info(f'Полученные данные: {get_convert}')
+
+            # Проверяем наличие и валидность курса в ответе
+            if 'rate' in get_convert and get_convert['rate'] is not None:
+                # Добавляем валюту и курс в результат
+                currency_value.append({'currency': item, 'rate': float(get_convert['rate'])})
+                logger.info(f'Успешно извлеченный курс для {item}: {get_convert["rate"]}')
+            else:
+                # Логируем отсутствие курса в ответе
+                logger.warning(f"Не найден курс обмена валюты {item} в ответе: {get_convert}")
+                currency_value.append({'currency': item, 'rate': None})
+
+        # Обрабатываем ошибки сетевого запроса
+        except requests.exceptions.RequestException as err:
+            logger.error(f"При выполнении запроса произошла ошибка: {err}")
+            continue
+
+        # Обрабатываем ошибки обработки данных
+        except (KeyError, ValueError, TypeError) as err:
+            logger.error(f"Ошибка при обработке данных для валюты {item}: {err}")
+            continue
+
+    # Возвращаем результат или None если список пустой
+    return currency_value if currency_value else None
+
+@log_function
+def read_user_setting(setting: str) -> List[str] | None:
+    """Функция считывает настройки пользователя из файла ../data/user_setting.json"""
+
+    # Формируем путь к директории с настройками (папка data на уровень выше)
+    user_setting_config_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        'data',
+    )
+    # Формируем полный путь к файлу настроек
+    user_setting_config = os.path.join(user_setting_config_path, 'user_setting.json')
+
+    try:
+       # Логируем попытку чтения настроек
+        logger.info(f'Чтение пользовательских настроек: {setting}')
+
+        # Открываем и читаем JSON файл с настройками
+        with open(user_setting_config, 'r', encoding='utf-8') as user_setting:
+            data: Dict[str, Any] = json.load(user_setting)
+
+            # Возвращаем соответствующие настройки в зависимости от запроса
+            if setting == 'user_currencies':
+                result = data.get('user_currencies')
+                if isinstance(result, list) and all(isinstance(item, str) for item in result):
+                    logger.info(f'Валюта пользователя: {result}')
+                    return result
+                else:
+                    logger.error(f"user_currencies не является списком строк: {type(result)}")
+                    return None
+            elif setting == 'user_stocks':
+                result = data.get('user_stocks')
+                if isinstance(result, list) and all(isinstance(item, str) for item in result):
+                    logger.info(f'Акции пользователя: {result}')
+                    return result
+                else:
+                    logger.error(f"user_stocks не является списком строк: {type(result)}")
+                    return None
+            else:
+                # Возвращаем None для неизвестных настроек
+                return None
+
+    # Обрабатываем случай отсутствия файла
+    except FileNotFoundError:
+        logger.error(f"Файл {user_setting_config} не найден")
+        raise
+
+    # Обрабатываем ошибки формата JSON
+    except json.JSONDecodeError:
+        logger.error(f"Ошибка при работе с JSON в файле {user_setting_config}")
+        raise
+
 
     #@log_function
 #def stock_price(data: List[str]) -> List[Dict[str, Any]] | None:

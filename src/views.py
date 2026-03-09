@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
-from src.utils import read_operations, get_greeting, get_expense, top_five
+from src.utils import read_operations, get_greeting, get_expense, top_five, exchange_rate, read_user_setting
 
 
 #load_dotenv()
@@ -21,6 +21,8 @@ def main(data_str: str):
     start_date = end_date.replace(day=1)
 
     transactions_df = transactions_df[transactions_df["Дата операции"].between(start_date, end_date)]
+    return transactions_df
+
     print(transactions_df)
 
 
@@ -123,10 +125,18 @@ card_expence = get_expense(filtered_data)
 # Получаем топ-5 транзакций по сумме
 top_five_list = top_five(filtered_data)
 
+# Получаем настройки пользователя для валют и акций
+user_currencies = read_user_setting('user_currencies')
+user_stocks = read_user_setting('user_stocks')
+
+# Получаем актуальные курсы валют
+currency_rates = exchange_rate(user_currencies)
+
 result = {
     'greeting': greeting_str,  #Приветствие
     'cards': card_expence, # данные по картам
-    'top_transactions': top_five_list # Топ-5 транзакций
+    'top_transactions': top_five_list, # Топ-5 транзакций
+    'currency_rates': currency_rates,  # Курсы валют
 }
 
 
