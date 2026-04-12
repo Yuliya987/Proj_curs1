@@ -298,10 +298,51 @@ def stock_price(data: List[str]) -> List[Dict[str, Any]] | None:
         response = requests.get(url, timeout=10)
         logger.info(f'Запрос выполнен успешно. Код состояния: {response.status_code}')
 
+    # Проверяем успешность HTTP-запроса
+    if response.status_code != 200:
+        logger.error(f'API вернул код состояния: {response.status_code} для валюты {symbol}')
+        return None
 
+    # Парсим JSON ответ от API
+    get_convert = response.json()
 
+    # Обрабатываем данные для каждой акции из исходного списка
+    for stock_symbol in data:
+        if stock_symbol in get_convert:
+            stock_data = get_convert[stock_symbol]
+            # Проверяем наличие и валидность цены в ответе
+            if 'price' in stock_data and stock_data['price'] is not None:
+                try:
+                    # Преобразуем цену в float и добавляем в результат
+                    stock_prices.append({'stock': stock_symbol, 'price': float(stock_data['price'])})
+                    logger.info(f'Успешно извлечена цена для {stock_symbol}: {stock_data["price"]}')
+                except (ValueError, TypeError) as e:
+                    # Обрабатываем ошибки преобразования типа
+                    logger.error(f"Ошибка преобразования цены для {stock_symbol}: {stock_data['price']} - {e}")
+                    stock_prices.append({'stock': stock_symbol, 'price': None})
+            else:
+                # Логируем отсутствие цены в ответе API
+                logger.warning(f"Не найдена цена акции {stock_symbol} в ответе: {stock_data}")
+                stock_prices.append({'stock': stock_symbol, 'price': None})
+        else:
+            # Логируем отсутствие акции в ответе API
+            logger.warning(f"Акция {stock_symbol} не найдена в ответе API")
+            stock_prices.append({'stock': stock_symbol, 'price': None})
 
-#def get_currency_rate(api_key, currency_from, currency_to):
+            # Возвращаем результат или None если список пустой
+        return stock_prices if stock_prices else None
+
+        # Обрабатываем ошибки сетевого запроса
+        except requests.exceptions.RequestException as err:
+        logger.error(f"При выполнении запроса произошла ошибка: {err}")
+        return None
+
+    # Обрабатываем ошибки обработки данных
+    except (KeyError, ValueError, TypeError) as err:
+    logger.error(f"Ошибка при обработке данных для акций {symbol}: {err}")
+    return None
+
+    #def get_currency_rate(api_key, currency_from, currency_to):
  #   try:
     # Логируем и выполняем HTTP-запрос к API
  #   logger.info(f'Отправка GET-request для {symbol} на
