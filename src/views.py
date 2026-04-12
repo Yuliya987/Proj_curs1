@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
-from src.utils import read_operations, get_greeting, get_expense, top_five, exchange_rate, read_user_setting
+from src.utils import read_operations, get_greeting, get_expense, top_five, exchange_rate, read_user_setting, stock_price
 
 
 #load_dotenv()
@@ -132,11 +132,15 @@ user_stocks = read_user_setting('user_stocks')
 # Получаем актуальные курсы валют
 currency_rates = exchange_rate(user_currencies)
 
+# Получаем актуальные цены акций
+stock_prices = stock_price(user_stocks)
+
 result = {
     'greeting': greeting_str,  #Приветствие
     'cards': card_expence, # данные по картам
     'top_transactions': top_five_list, # Топ-5 транзакций
     'currency_rates': currency_rates,  # Курсы валют
+    'stock_prices': stock_prices,  # Цены акций
 }
 
 

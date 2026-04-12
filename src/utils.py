@@ -7,7 +7,6 @@ from typing import Any, List, Dict
 import logger
 import pandas as pd
 import logging
-from logging import Logger
 
 import requests
 from dotenv import load_dotenv
@@ -265,36 +264,42 @@ def read_user_setting(setting: str) -> List[str] | None:
         raise
 
 
-    #@log_function
-#def stock_price(data: List[str]) -> List[Dict[str, Any]] | None:
-#        """Функция получает на вход список акций и возвращает список словарей, где ключи - код акций, а значение -
-#        стоимость акций"""
+@log_function
+def stock_price(data: List[str]) -> List[Dict[str, Any]] | None:
+    """Функция получает на вход список акций и возвращает список словарей, где ключи - код акций, а значение -
+    стоимость акций"""
 
     # Инициализируем список для хранения цен акций
- #   stock_prices: List[Dict[str, Any]] = []
+    stock_prices: List[Dict[str, Any]] = []
 
     # Загружаем переменные окружения и получаем API ключ
- #   load_dotenv()
- #   api_key = os.getenv('API_KEY')
+    load_dotenv()
+    api_key = os.getenv('API_KEY')
 
     # Проверяем наличие API ключа
- #   if not api_key:
- #       logger.error('API_KEY не найден в переменных окружения')
- #   return None
+    if not api_key:
+        logger.error('API_KEY не найден в переменных окружения')
+    return None
 
     # Проверяем, что передан непустой список акций
- #   if not data:
- #       logger.warning('Получен пустой список акций')
-#    return None
+    if not data:
+        logger.warning('Получен пустой список акций')
+    return None
 
     # Объединяем коды акций в строку через запятую для API запроса
- #   symbol = ','.join(data)
+    symbol = ','.join(data)
 
     # Формируем URL для запроса цен акций
- #   url = f'
- #   https: // api.twelvedata.com / price?symbol = {symbol} & interval = 1
-  #  day & apikey = {api_key}
-   # '
+    url = f'https://api.twelvedata.com/price?symbol={symbol}&interval=1day&apikey={api_key}'
+
+    try:
+        # Логируем и выполняем HTTP-запрос к API
+        logger.info(f'Отправка GET-request для {symbol} на https://api.twelvedata.com...')
+        response = requests.get(url, timeout=10)
+        logger.info(f'Запрос выполнен успешно. Код состояния: {response.status_code}')
+
+
+
 
 #def get_currency_rate(api_key, currency_from, currency_to):
  #   try:
