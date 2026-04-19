@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from datetime import datetime
 from functools import wraps
@@ -6,10 +7,9 @@ from typing import Any, List, Dict
 
 import logger
 import pandas as pd
-import logging
-
 import requests
 from dotenv import load_dotenv
+
 
 def get_greeting(date_time):
     """Функция принимает дату и время и возвращает соответствующее приветствие"""
@@ -24,11 +24,12 @@ def get_greeting(date_time):
     else:
         return "Добрый вечер!"
 
+
 def read_operations(file_path: str) -> Any:
     """Функция чтения файлов из excel-файлов"""
     transactions_df = pd.read_excel(file_path)
 
-    transactions_df["Дата операции"] = pd.to_datetime(transactions_df["Дата операции"], format = "%d.%m.%Y %H:%M:%S")
+    transactions_df["Дата операции"] = pd.to_datetime(transactions_df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
     transactions_df["Дата платежа"] = pd.to_datetime(transactions_df["Дата платежа"], format="%d.%m.%Y")
 
     return transactions_df
@@ -68,6 +69,7 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
+
 def log_function(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -98,6 +100,7 @@ def get_greeting() -> str | None:
 
     return greet_message[time_of_day]
 
+
 @log_function
 def get_expense(data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Функция для получения суммы трат по картам"""
@@ -121,6 +124,7 @@ def get_expense(data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         result1.append({"last_digits": str(card)[1:], "total_spent": float(total_amount), "cashback": float(cashback)})
 
     return result1
+
 
 @log_function
 def top_five(data: List[Dict[str, Any]]) -> List[Dict[str, Any]] | None:
@@ -150,6 +154,7 @@ def top_five(data: List[Dict[str, Any]]) -> List[Dict[str, Any]] | None:
 
     # Возвращаем отформатированный список топ-5 транзакций
     return formatted_result
+
 
 @log_function
 def exchange_rate(currency: List[str]) -> List[Dict[str, Any]] | None:
@@ -212,6 +217,7 @@ def exchange_rate(currency: List[str]) -> List[Dict[str, Any]] | None:
     # Возвращаем результат или None если список пустой
     return currency_value if currency_value else None
 
+
 @log_function
 def read_user_setting(setting: str) -> List[str] | None:
     """Функция считывает настройки пользователя из файла ../data/user_setting.json"""
@@ -225,16 +231,16 @@ def read_user_setting(setting: str) -> List[str] | None:
     user_setting_config = os.path.join(user_setting_config_path, 'user_setting.json')
 
     try:
-       # Логируем попытку чтения настроек
+        # Логируем попытку чтения настроек
         logger.info(f'Чтение пользовательских настроек: {setting}')
 
         # Открываем и читаем JSON файл с настройками
         with open(user_setting_config, 'r', encoding='utf-8') as user_setting:
-            data: Dict[str, Any] = json.load(user_setting)
+            data1: Dict[str, Any] = json.load(user_setting)
 
             # Возвращаем соответствующие настройки в зависимости от запроса
             if setting == 'user_currencies':
-                result = data.get('user_currencies')
+                result = data1.get('user_currencies')
                 if isinstance(result, list) and all(isinstance(item, str) for item in result):
                     logger.info(f'Валюта пользователя: {result}')
                     return result
@@ -242,7 +248,7 @@ def read_user_setting(setting: str) -> List[str] | None:
                     logger.error(f"user_currencies не является списком строк: {type(result)}")
                     return None
             elif setting == 'user_stocks':
-                result = data.get('user_stocks')
+                result = data1.get('user_stocks')
                 if isinstance(result, list) and all(isinstance(item, str) for item in result):
                     logger.info(f'Акции пользователя: {result}')
                     return result
@@ -265,7 +271,7 @@ def read_user_setting(setting: str) -> List[str] | None:
 
 
 @log_function
-def stock_price(data: List[str]) -> List[Dict[str, Any]] | None:
+def stock_price(data1: List[str]) -> List[Dict[str, Any]] | None:
     """Функция получает на вход список акций и возвращает список словарей, где ключи - код акций, а значение -
     стоимость акций"""
 
@@ -339,59 +345,60 @@ def stock_price(data: List[str]) -> List[Dict[str, Any]] | None:
 
     # Обрабатываем ошибки обработки данных
     except (KeyError, ValueError, TypeError) as err:
-    logger.error(f"Ошибка при обработке данных для акций {symbol}: {err}")
-    return None
+        logger.error(f"Ошибка при обработке данных для акций {symbol}: {err}")
+        return None
 
-    #def get_currency_rate(api_key, currency_from, currency_to):
- #   try:
-    # Логируем и выполняем HTTP-запрос к API
- #   logger.info(f'Отправка GET-request для {symbol} на
-  #  https: // api.twelvedata.com...
-  #  ')
 
- #   response = requests.get(url, timeout=10)
- #   logger.info(f'Запрос выполнен успешно. Код состояния: {response.status_code}')
+# def get_currency_rate(api_key, currency_from, currency_to):
+#   try:
+# Логируем и выполняем HTTP-запрос к API
+#   logger.info(f'Отправка GET-request для {symbol} на
+#  https: // api.twelvedata.com...
+#  ')
 
-    # Проверяем успешность HTTP-запроса
+#   response = requests.get(url, timeout=10)
+#   logger.info(f'Запрос выполнен успешно. Код состояния: {response.status_code}')
+
+# Проверяем успешность HTTP-запроса
 #    if response.status_code != 200:
- #       logger.error(f'API вернул код состояния: {response.status_code} для валюты {symbol}')
- #   return None
+#       logger.error(f'API вернул код состояния: {response.status_code} для валюты {symbol}')
+#   return None
 
-    # Парсим JSON ответ от API
+# Парсим JSON ответ от API
 #    get_convert = response.json()
 
-    # Обрабатываем данные для каждой акции из исходного списка
+# Обрабатываем данные для каждой акции из исходного списка
 #    for stock_symbol in data:
 #        if stock_symbol in get_convert:
 #            stock_data = get_convert[stock_symbol]
-    # Проверяем наличие и валидность цены в ответе
+# Проверяем наличие и валидность цены в ответе
 #    if 'price' in stock_data and stock_data['price'] is not None:
 #        try:
-    # Преобразуем цену в float и добавляем в результат
+# Преобразуем цену в float и добавляем в результат
 #    stock_prices.append({'stock': stock_symbol, 'price': float(stock_data['price'])})
- #   logger.info(f'Успешно извлечена цена для {stock_symbol}: {stock_data["price"]}')
- #   except (ValueError, TypeError) as e:
-    # Обрабатываем ошибки преобразования типа
-    #     logger.error(f"Ошибка преобразования цены для {stock_symbol}: {stock_data['price']} - {e}")
-    #     stock_prices.append({'stock': stock_symbol, 'price': None})
-  #  else:
-    # Логируем отсутствие цены в ответе API
-    #     logger.warning(f"Не найдена цена акции {stock_symbol} в ответе: {stock_data}")
-    #     stock_prices.append({'stock': stock_symbol, 'price': None})
- #   else:
-    # Логируем отсутствие акции в ответе API
-    #     logger.warning(f"Акция {stock_symbol} не найдена в ответе API")
-    #     stock_prices.append({'stock': stock_symbol, 'price': None})
+#   logger.info(f'Успешно извлечена цена для {stock_symbol}: {stock_data["price"]}')
+#   except (ValueError, TypeError) as e:
+# Обрабатываем ошибки преобразования типа
+#     logger.error(f"Ошибка преобразования цены для {stock_symbol}: {stock_data['price']} - {e}")
+#     stock_prices.append({'stock': stock_symbol, 'price': None})
+#  else:
+# Логируем отсутствие цены в ответе API
+#     logger.warning(f"Не найдена цена акции {stock_symbol} в ответе: {stock_data}")
+#     stock_prices.append({'stock': stock_symbol, 'price': None})
+#   else:
+# Логируем отсутствие акции в ответе API
+#     logger.warning(f"Акция {stock_symbol} не найдена в ответе API")
+#     stock_prices.append({'stock': stock_symbol, 'price': None})
 
-    # Возвращаем результат или None если список пустой
-    return stock_prices if stock_prices else None
+# Возвращаем результат или None если список пустой
+return stock_prices if stock_prices else None
 
-    # Обрабатываем ошибки сетевого запроса
- #   except requests.exceptions.RequestException as err:
-    #     logger.error(f"При выполнении запроса произошла ошибка: {err}")
-    #     return None
+# Обрабатываем ошибки сетевого запроса
+#   except requests.exceptions.RequestException as err:
+#     logger.error(f"При выполнении запроса произошла ошибка: {err}")
+#     return None
 
-    # Обрабатываем ошибки обработки данных
+# Обрабатываем ошибки обработки данных
 #    except (KeyError, ValueError, TypeError) as err:
-    #     logger.error(f"Ошибка при обработке данных для акций {symbol}: {err}")
+#     logger.error(f"Ошибка при обработке данных для акций {symbol}: {err}")
 #     return None
